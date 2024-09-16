@@ -16,7 +16,7 @@ setup(
     packages=find_packages(exclude=('tests',)),
     py_modules=['settings'],
     install_requires=[
-        'psycopg2',
+        'psycopg2-binary',
         'Pillow>=8.0.0',
     ],
     zip_safe=False,
