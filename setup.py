@@ -14,6 +14,7 @@ setup(
     author_email='info@algousstudio.ru',
     url='https://github.com/Algous-Studio/cerebro_db_manager',
     packages=find_packages(exclude=('tests',)),
+    py_modules=['settings'],
     zip_safe=False,
     python_requires=">=3.7.0",
     classifiers=[
