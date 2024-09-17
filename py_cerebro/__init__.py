@@ -12,6 +12,3 @@ The package includes the following modules:
 """
 
 __all__ = ["database", "dbtypes", "cclib", "cargador"]
-from cerebro.utilities.py_cerebro import *
-
- 
