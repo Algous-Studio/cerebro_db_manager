@@ -12,7 +12,7 @@ _con_cag = None
 
 
 class CerebroDBManager: 
-    def __init__(self, user, password):
+    def __init__(self, user = None, password = None):
         global _con_db
         global _con_cag
         if all([self.user, self.password]):
