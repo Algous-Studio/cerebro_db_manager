@@ -12,16 +12,16 @@ _con_cag = None
 
 
 class CerebroDBManager: 
-    def __init__(self, user = None, password = None):
+    def __init__(self):
         global _con_db
         global _con_cag
-        if all([self.user, self.password]):
-            self.user = user
-            self.password = password 
-            _con_db = self._connect_to_database()
-            _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
-                                          settings.CARGADOR_XMLRPC_PORT,
-                                          settings.CARGADOR_HTTP_PORT)       
+#        if all([self.user, self.password]):
+#            self.user = user
+#            self.password = password 
+#            _con_db = self._connect_to_database()
+#            _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
+#                                          settings.CARGADOR_XMLRPC_PORT,
+#                                          settings.CARGADOR_HTTP_PORT)       
         self.cargodor = _con_cag
         self.db = _con_db
 
