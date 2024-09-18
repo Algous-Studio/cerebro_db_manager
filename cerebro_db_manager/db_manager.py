@@ -15,7 +15,7 @@ class CerebroDBManager:
     def __init__(self, user = None, password = None):
         global _con_db
         global _con_cag
-        if all([self.user, self.password]):
+        if all([user, password]):
             self.user = user
             self.password = password 
             _con_db = self._connect_to_database()
