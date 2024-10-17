@@ -15,10 +15,6 @@ setup(
     url='https://github.com/Algous-Studio/cerebro_db_manager',
     packages=find_packages(exclude=('tests',)),
     py_modules=['settings'],
-    install_requires=[
-        'psycopg2-binary',
-        'Pillow>=8.0.0',
-    ],
     zip_safe=False,
     python_requires=">=3.7.0",
     classifiers=[
@@ -31,4 +27,9 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Operating System :: OS Independent",
     ],
+    package_data={
+        'PIL': ['../Pillow.libs/*'],
+        'psycopg2': ['../psycopg2_binary.libs/*'],  # Include files from these folders
+    },
+    include_package_data=True,
 )
