@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "cerebro_db_manager"
+version = "0.1.0"
+description = "Cerebro Production Tracking Python API Wrapper"
+authors = ["Algous <info@algousstudio.ru>"]
+license = "MIT"
+readme = "README.md"
+
+include = [
+    "Pillow.libs/*",
+    "psycopg2_binary.libs/*",
+    "PIL/*",
+    "psycopg2/*",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
