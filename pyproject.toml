@@ -11,6 +11,7 @@ include = [
     "psycopg2_binary.libs/*",
     "PIL/*",
     "psycopg2/*",
+    "settings.py",
 ]
 
 [tool.poetry.dependencies]
