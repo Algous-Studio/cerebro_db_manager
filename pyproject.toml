@@ -12,6 +12,7 @@ include = [
     "PIL/*",
     "psycopg2/*",
     "settings.py",
+    "py_cerebro/*"
 ]
 
 [tool.poetry.dependencies]
