@@ -1,3 +1,4 @@
+import os
 import logging
 import settings
 from py_cerebro.database import Database as cerebroDB
@@ -6,14 +7,23 @@ from cerebro_db_manager.attachment import Attachment
 
 logger = logging.getLogger(__name__)
 
-class CerebroDBManager:
-    def __init__(self, user, password):
-        self.user = user
-        self.password = password
-        self.db = self._connect_to_database()
-        self.cargodor = cargador.Cargador(settings.CARGADOR_HOST,
+_con_db = None
+_con_cag = None
+
+
+class CerebroDBManager: 
+    def __init__(self, user = None, password = None):
+        global _con_db
+        global _con_cag
+        if all([user, password]):
+            self.user = user
+            self.password = password 
+            _con_db = self._connect_to_database()
+            _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
                                           settings.CARGADOR_XMLRPC_PORT,
-                                          settings.CARGADOR_HTTP_PORT)
+                                          settings.CARGADOR_HTTP_PORT)       
+        self.cargodor = _con_cag
+        self.db = _con_db
 
     def _connect_to_database(self):
         db = cerebroDB(settings.CEREBRO_DB_HOST, settings.CEREBRO_DB_PORT)
