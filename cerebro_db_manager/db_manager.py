@@ -37,10 +37,7 @@ class CerebroDBManager:
         report_message_id = self.db.add_report(
             task_id, message_id, comment, minutes=minutes
         )
-        logger.info('testttttttstststststststtststs')
-        status_id = 281474978165906
-        self.db.task_set_status(task_id, status_id)
-        logger.info('поменян статус')
+        self.db.task_set_status(task_id, settings.CHECK_STATUS_ID)
         return report_message_id
 
     def _add_attachment(self, message_id, attachment: Attachment):

@@ -10,3 +10,5 @@ MIRADA_PATH = "//ss/front/cerebro/mirada.exe"
 CEREBRO_USER_LOGIN = "rnd"
 CEREBRO_USER_PASSWORD = "1"
 
+# Cerebro status id
+CHECK_STATUS_ID = 2814749770945326
