@@ -48,7 +48,6 @@ class CerebroDBManager:
             report_message_id = self.db.add_report(
                 task_id, message_id, comment, minutes=minutes
             )
-            self.db.task_set_status(task_id, settings.CHECK_STATUS_ID)
             logger.info("Report message created for task ID %s", task_id)
             return report_message_id
         
@@ -92,10 +91,19 @@ class CerebroDBManager:
             report_message_id = self._create_report_message(task_id, comment, minutes)
             if attachments is not None:
                 self._add_attachments(report_message_id, attachments)
+            self.set_task_status(task_id, settings.CHECK_STATUS_ID)
             logger.info("Report added for task ID %s", task_id)
             return report_message_id
         except Exception as e:
             logger.error("Failed to add report for task ID %s: %s", task_id, e)
+            raise
+
+    def set_task_status(self, task_id, status_id):
+        try:
+            self.db.task_set_status(task_id, status_id)
+            logger.info("Status for task ID %s set to %s", task_id, status_id)
+        except Exception as e:
+            logger.error("Failed to set status for task ID %s: %s", task_id, e)
             raise
 
     def get_tasks_childrens(self, project_id: int):
