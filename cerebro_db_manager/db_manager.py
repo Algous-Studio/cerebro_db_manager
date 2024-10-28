@@ -12,43 +12,64 @@ _con_cag = None
 
 
 class CerebroDBManager: 
-    def __init__(self, user = None, password = None):
+    def __init__(self, user=None, password=None):
         global _con_db
         global _con_cag
         if all([user, password]):
             self.user = user
-            self.password = password 
-            _con_db = self._connect_to_database()
-            _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
-                                          settings.CARGADOR_XMLRPC_PORT,
-                                          settings.CARGADOR_HTTP_PORT)       
+            self.password = password
+            try:
+                _con_db = self._connect_to_database()
+                _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
+                                             settings.CARGADOR_XMLRPC_PORT,
+                                             settings.CARGADOR_HTTP_PORT)
+                logger.info("Successfully connected to database and Cargador.")
+            except Exception as e:
+                logger.error("Failed to connect to database or Cargador: %s", e)
+                raise
         self.cargodor = _con_cag
         self.db = _con_db
 
     def _connect_to_database(self):
-        db = cerebroDB(settings.CEREBRO_DB_HOST, settings.CEREBRO_DB_PORT)
-        db.connect(self.user, self.password)
-        return db
+        try:
+            db = cerebroDB(settings.CEREBRO_DB_HOST, settings.CEREBRO_DB_PORT)
+            db.connect(self.user, self.password)
+            logger.info("Cerebro database connection established.")
+            return db
+        except Exception as e:
+            logger.error("Cerebro database connection failed: %s", e)
+            raise
 
     def _create_report_message(self, task_id, comment, minutes) -> int:
-        messages = self.db.task_messages(task_id)
-        first_massage = messages[0]
-        message_id = first_massage[dbtypes.MESSAGE_DATA_ID]
-        report_message_id = self.db.add_report(
-            task_id, message_id, comment, minutes=minutes
-        )
-        self.db.task_set_status(task_id, settings.CHECK_STATUS_ID)
-        return report_message_id
+        try:
+            messages = self.db.task_messages(task_id)
+            first_message = messages[0]
+            message_id = first_message[dbtypes.MESSAGE_DATA_ID]
+            report_message_id = self.db.add_report(
+                task_id, message_id, comment, minutes=minutes
+            )
+            self.db.task_set_status(task_id, settings.CHECK_STATUS_ID)
+            logger.info("Report message created for task ID %s", task_id)
+            return report_message_id
+        
+        except Exception as e:
+            logger.error("Failed to create report message for task ID %s: %s", task_id, e)
+            raise
 
     def _add_attachment(self, message_id, attachment: Attachment):
-        self.db.add_attachment(
-            message_id=message_id,
-            carga=self.cargodor,
-            filename=attachment.file_path,
-            thumbnails=attachment.thumbnails,
-            description=attachment.description,
-            as_link=True,
-        )
+        try:
+            self.db.add_attachment(
+                message_id=message_id,
+                carga=self.cargodor,
+                filename=attachment.file_path,
+                thumbnails=attachment.thumbnails,
+                description=attachment.description,
+                as_link=True,
+            )
+            logger.info("Attachment added for message ID %s", message_id)
+        except Exception as e:
+            logger.error("Failed to add attachment for message ID %s: %s", message_id, e)
+            raise
 
     def _add_attachments(self, message_id, attachments):
         if isinstance(attachments, list):
@@ -57,21 +78,25 @@ class CerebroDBManager:
                     self._add_attachment(message_id, attachment)
                 else:
                     logger.warning(
-                        "Один из элементов списка attachments не является экземпляром класса Attachment. Пропуск."
+                        "One of the items in attachments is not an instance of Attachment. Skipping."
                     )
         elif isinstance(attachments, Attachment):
             self._add_attachment(message_id, attachments)
         else:
             logger.warning(
-                "attachments должен быть либо списком объектов Attachment, либо объектом Attachment."
+                "Attachments must be either a list of Attachment objects or a single Attachment object."
             )
 
     def add_report(self, task_id, comment, attachments=None, minutes=0):
-        report_message_id = self._create_report_message(task_id, comment, minutes)
-
-        if attachments is not None:
-            self._add_attachments(report_message_id, attachments)
-        return report_message_id
+        try:
+            report_message_id = self._create_report_message(task_id, comment, minutes)
+            if attachments is not None:
+                self._add_attachments(report_message_id, attachments)
+            logger.info("Report added for task ID %s", task_id)
+            return report_message_id
+        except Exception as e:
+            logger.error("Failed to add report for task ID %s: %s", task_id, e)
+            raise
 
     def get_tasks_childrens(self, project_id: int):
         """
