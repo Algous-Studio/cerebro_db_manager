@@ -20,14 +20,16 @@ class CerebroDBManager:
             self.password = password
             try:
                 _con_db = self._connect_to_database()
-                _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
-                                             settings.CARGADOR_XMLRPC_PORT,
-                                             settings.CARGADOR_HTTP_PORT)
+                _con_cag = cargador.Cargador(_host = settings.CARGADOR_HOST,
+                                             _rpc_port = settings.CARGADOR_XMLRPC_PORT,
+                                             _http_port = settings.CARGADOR_HTTP_PORT)
+                
                 logger.info("Successfully connected to database and Cargador.")
             except Exception as e:
                 logger.error("Failed to connect to database or Cargador: %s", e)
                 raise
         self.cargodor = _con_cag
+        print(self.cargodor.statusInfo())
         self.db = _con_db
 
     def _connect_to_database(self):
