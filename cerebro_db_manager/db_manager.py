@@ -6,6 +6,7 @@ from py_cerebro import dbtypes, cargador
 from cerebro_db_manager.attachment import Attachment
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 _con_db = None
 _con_cag = None
@@ -29,7 +30,6 @@ class CerebroDBManager:
                 logger.error("Failed to connect to database or Cargador: %s", e)
                 raise
         self.cargodor = _con_cag
-        print(self.cargodor.statusInfo())
         self.db = _con_db
 
     def _connect_to_database(self):
