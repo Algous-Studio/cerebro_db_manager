@@ -33,14 +33,14 @@ class Attachment:
                     logger.warning(f"Файл {thumbnail_path} должен быть в формате JPG или PNG.")
                     break
                 
-                # try:
-                #     with Image.open(thumbnail_path) as img:
-                #         if img.size != (512, 512):
-                #             logger.warning(f"Размер изображения {thumbnail_path} не равен 512x512.")
-                #             break
-                # except Exception as e:
-                #     logger.warning(f"Не удалось открыть изображение {thumbnail_path}. Ошибка: {e}")
-                #     break
+                try:
+                    with Image.open(thumbnail_path) as img:
+                        if img.size[0] > 512 or img.size[1] > 512:
+                            logger.warning(f"Image {thumbnail_path} exceeds the maximum size of 512x512 pixels.")
+                            break
+                except Exception as e:
+                    logger.warning(f"Could not open image {thumbnail_path}. Error: {e}")
+                    break
                 valid_thumbnails.append(thumbnail_path)
 
             self.thumbnails = valid_thumbnails[:3]
