@@ -10,15 +10,14 @@ logger = logging.getLogger(__name__)
 class Attachment:
     def __init__(self, file_path: str, thumbnails: list = None, description: str = ""):
         if not isinstance(file_path, str) or not os.path.isfile(file_path):
-            raise ValueError("file_path должен быть строкой и указывать на существующий файл.")
+            raise ValueError("file_path must be a string and point to an existing file.")
         self.file_path = file_path
-        
         self.description = description
         self.thumbnails = []
 
         if thumbnails:
             if not isinstance(thumbnails, list):
-                raise ValueError("thumbnails должен быть списком путей.")
+                raise ValueError("thumbnails must be a list of paths.")
             
             valid_thumbnails = []
 
@@ -27,10 +26,10 @@ class Attachment:
                     break
 
                 if not os.path.isfile(thumbnail_path):
-                    logger.warning(f"Файл {thumbnail_path} не существует.")
+                    logger.warning(f"File {thumbnail_path} does not exist.")
                     break
                 if not thumbnail_path.lower().endswith(('.jpg', '.jpeg', '.png')):
-                    logger.warning(f"Файл {thumbnail_path} должен быть в формате JPG или PNG.")
+                    logger.warning(f"File {thumbnail_path} must be in JPG or PNG format.")
                     break
                 
                 try:
