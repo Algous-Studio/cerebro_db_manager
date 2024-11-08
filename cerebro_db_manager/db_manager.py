@@ -1,9 +1,9 @@
-import os
 import logging
+
 import settings
-from py_cerebro.database import Database as cerebroDB
-from py_cerebro import dbtypes, cargador
 from cerebro_db_manager.attachment import Attachment
+from py_cerebro import cargador, dbtypes
+from py_cerebro.database import Database as cerebroDB
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -12,7 +12,7 @@ _con_db = None
 _con_cag = None
 
 
-class CerebroDBManager: 
+class CerebroDBManager:
     def __init__(self, user=None, password=None):
         global _con_db
         global _con_cag
@@ -21,10 +21,12 @@ class CerebroDBManager:
             self.password = password
             try:
                 _con_db = self._connect_to_database()
-                _con_cag = cargador.Cargador(_host = settings.CARGADOR_HOST,
-                                             _rpc_port = settings.CARGADOR_XMLRPC_PORT,
-                                             _http_port = settings.CARGADOR_HTTP_PORT)
-                
+                _con_cag = cargador.Cargador(
+                    _host=settings.CARGADOR_HOST,
+                    _rpc_port=settings.CARGADOR_XMLRPC_PORT,
+                    _http_port=settings.CARGADOR_HTTP_PORT,
+                )
+
                 logger.info("Successfully connected to database and Cargador.")
             except Exception as e:
                 logger.error("Failed to connect to database or Cargador: %s", e)
@@ -52,9 +54,11 @@ class CerebroDBManager:
             )
             logger.info("Report message created for task ID %s", task_id)
             return report_message_id
-        
+
         except Exception as e:
-            logger.error("Failed to create report message for task ID %s: %s", task_id, e)
+            logger.error(
+                "Failed to create report message for task ID %s: %s", task_id, e
+            )
             raise
 
     def _add_attachment(self, message_id, attachment: Attachment):
@@ -69,7 +73,9 @@ class CerebroDBManager:
             )
             logger.info("Attachment added for message ID %s", message_id)
         except Exception as e:
-            logger.error("Failed to add attachment for message ID %s: %s", message_id, e)
+            logger.error(
+                "Failed to add attachment for message ID %s: %s", message_id, e
+            )
             raise
 
     def _add_attachments(self, message_id, attachments):
@@ -133,10 +139,16 @@ class CerebroDBManager:
                 "TASK_DATA_PLANNED_DELTA": task[dbtypes.TASK_DATA_PLANNED_DELTA],
                 "TASK_DATA_NAME": task[dbtypes.TASK_DATA_NAME],
                 "TASK_DATA_PARENT_URL": task[dbtypes.TASK_DATA_PARENT_URL],
-                "TASK_DATA_ACTIVITY_NAME": None if task[dbtypes.TASK_DATA_ACTIVITY_NAME] == '' else task[dbtypes.TASK_DATA_ACTIVITY_NAME],
+                "TASK_DATA_ACTIVITY_NAME": None
+                if task[dbtypes.TASK_DATA_ACTIVITY_NAME] == ""
+                else task[dbtypes.TASK_DATA_ACTIVITY_NAME],
                 "TASK_DATA_ACTIVITY_ID": task[dbtypes.TASK_DATA_ACTIVITY_ID],
-                "TASK_DATA_SELF_USERS_DECLARED": task[dbtypes.TASK_DATA_SELF_USERS_DECLARED],
-                "TASK_DATA_SELF_USERS_APPROVED": task[dbtypes.TASK_DATA_SELF_USERS_APPROVED],
+                "TASK_DATA_SELF_USERS_DECLARED": task[
+                    dbtypes.TASK_DATA_SELF_USERS_DECLARED
+                ],
+                "TASK_DATA_SELF_USERS_APPROVED": task[
+                    dbtypes.TASK_DATA_SELF_USERS_APPROVED
+                ],
                 "TASK_DATA_CREATED": task[dbtypes.TASK_DATA_CREATED],
                 "TASK_DATA_PRIORITY": task[dbtypes.TASK_DATA_PRIORITY],
                 "TASK_DATA_PROGRESS": task[dbtypes.TASK_DATA_PROGRESS],
@@ -159,10 +171,18 @@ class CerebroDBManager:
                 "TASK_DATA_SELF_SPENT": task[dbtypes.TASK_DATA_SELF_SPENT],
                 "TASK_DATA_BUDGET": task[dbtypes.TASK_DATA_BUDGET],
                 "TASK_DATA_SPENT": task[dbtypes.TASK_DATA_SPENT],
-                "TASK_DATA_RESOURCE_SELF_DECLARED": task[dbtypes.TASK_DATA_RESOURCE_SELF_DECLARED],
-                "TASK_DATA_RESOURCE_SELF_APPROVED": task[dbtypes.TASK_DATA_RESOURCE_SELF_APPROVED],
-                "TASK_DATA_RESOURCE_DECLARED": task[dbtypes.TASK_DATA_RESOURCE_DECLARED],
-                "TASK_DATA_RESOURCE_APPROVED": task[dbtypes.TASK_DATA_RESOURCE_APPROVED],
+                "TASK_DATA_RESOURCE_SELF_DECLARED": task[
+                    dbtypes.TASK_DATA_RESOURCE_SELF_DECLARED
+                ],
+                "TASK_DATA_RESOURCE_SELF_APPROVED": task[
+                    dbtypes.TASK_DATA_RESOURCE_SELF_APPROVED
+                ],
+                "TASK_DATA_RESOURCE_DECLARED": task[
+                    dbtypes.TASK_DATA_RESOURCE_DECLARED
+                ],
+                "TASK_DATA_RESOURCE_APPROVED": task[
+                    dbtypes.TASK_DATA_RESOURCE_APPROVED
+                ],
                 "TASK_DATA_SELF_STATUS": task[dbtypes.TASK_DATA_SELF_STATUS],
                 "TASK_DATA_CC_STATUS": task[dbtypes.TASK_DATA_CC_STATUS],
                 "TASK_DATA_CC_STATUS_STAT": task[dbtypes.TASK_DATA_CC_STATUS_STAT],
@@ -171,4 +191,5 @@ class CerebroDBManager:
 
             task_list.append(task_dict)
 
+            self._get_all_childrens_recursive(task[dbtypes.TASK_DATA_ID], task_list)
             self._get_all_childrens_recursive(task[dbtypes.TASK_DATA_ID], task_list)
