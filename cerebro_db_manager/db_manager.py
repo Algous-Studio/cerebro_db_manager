@@ -1,53 +1,82 @@
-import os
 import logging
+
 import settings
-from py_cerebro.database import Database as cerebroDB
-from py_cerebro import dbtypes, cargador
 from cerebro_db_manager.attachment import Attachment
+from py_cerebro import cargador, dbtypes
+from py_cerebro.database import Database as cerebroDB
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 _con_db = None
 _con_cag = None
 
 
-class CerebroDBManager: 
-    def __init__(self, user = None, password = None):
+class CerebroDBManager:
+    def __init__(self, user=None, password=None):
         global _con_db
         global _con_cag
         if all([user, password]):
             self.user = user
-            self.password = password 
-            _con_db = self._connect_to_database()
-            _con_cag = cargador.Cargador(settings.CARGADOR_HOST,
-                                          settings.CARGADOR_XMLRPC_PORT,
-                                          settings.CARGADOR_HTTP_PORT)       
+            self.password = password
+            try:
+                _con_db = self._connect_to_database()
+                _con_cag = cargador.Cargador(
+                    _host=settings.CARGADOR_HOST,
+                    _rpc_port=settings.CARGADOR_XMLRPC_PORT,
+                    _http_port=settings.CARGADOR_HTTP_PORT,
+                )
+
+                logger.info("Successfully connected to database and Cargador.")
+            except Exception as e:
+                logger.error("Failed to connect to database or Cargador: %s", e)
+                raise
         self.cargodor = _con_cag
         self.db = _con_db
 
     def _connect_to_database(self):
-        db = cerebroDB(settings.CEREBRO_DB_HOST, settings.CEREBRO_DB_PORT)
-        db.connect(self.user, self.password)
-        return db
+        try:
+            db = cerebroDB(settings.CEREBRO_DB_HOST, settings.CEREBRO_DB_PORT)
+            db.connect(self.user, self.password)
+            logger.info("Cerebro database connection established.")
+            return db
+        except Exception as e:
+            logger.error("Cerebro database connection failed: %s", e)
+            raise
 
     def _create_report_message(self, task_id, comment, minutes) -> int:
-        messages = self.db.task_messages(task_id)
-        first_massage = messages[0]
-        message_id = first_massage[dbtypes.MESSAGE_DATA_ID]
-        report_message_id = self.db.add_report(
-            task_id, message_id, comment, minutes=minutes
-        )
-        return report_message_id
+        try:
+            messages = self.db.task_messages(task_id)
+            first_message = messages[0]
+            message_id = first_message[dbtypes.MESSAGE_DATA_ID]
+            report_message_id = self.db.add_report(
+                task_id, message_id, comment, minutes=minutes
+            )
+            logger.info("Report message created for task ID %s", task_id)
+            return report_message_id
+
+        except Exception as e:
+            logger.error(
+                "Failed to create report message for task ID %s: %s", task_id, e
+            )
+            raise
 
     def _add_attachment(self, message_id, attachment: Attachment):
-        self.db.add_attachment(
-            message_id=message_id,
-            carga=self.cargodor,
-            filename=attachment.file_path,
-            thumbnails=attachment.thumbnails,
-            description=attachment.description,
-            as_link=True,
-        )
+        try:
+            self.db.add_attachment(
+                message_id=message_id,
+                carga=self.cargodor,
+                filename=attachment.file_path,
+                thumbnails=attachment.thumbnails,
+                description=attachment.description,
+                as_link=True,
+            )
+            logger.info("Attachment added for message ID %s", message_id)
+        except Exception as e:
+            logger.error(
+                "Failed to add attachment for message ID %s: %s", message_id, e
+            )
+            raise
 
     def _add_attachments(self, message_id, attachments):
         if isinstance(attachments, list):
@@ -56,21 +85,34 @@ class CerebroDBManager:
                     self._add_attachment(message_id, attachment)
                 else:
                     logger.warning(
-                        "Один из элементов списка attachments не является экземпляром класса Attachment. Пропуск."
+                        "One of the items in attachments is not an instance of Attachment. Skipping."
                     )
         elif isinstance(attachments, Attachment):
             self._add_attachment(message_id, attachments)
         else:
             logger.warning(
-                "attachments должен быть либо списком объектов Attachment, либо объектом Attachment."
+                "Attachments must be either a list of Attachment objects or a single Attachment object."
             )
 
     def add_report(self, task_id, comment, attachments=None, minutes=0):
-        report_message_id = self._create_report_message(task_id, comment, minutes)
+        try:
+            report_message_id = self._create_report_message(task_id, comment, minutes)
+            if attachments is not None:
+                self._add_attachments(report_message_id, attachments)
+            self.set_task_status(task_id, settings.CHECK_STATUS_ID)
+            logger.info("Report added for task ID %s", task_id)
+            return report_message_id
+        except Exception as e:
+            logger.error("Failed to add report for task ID %s: %s", task_id, e)
+            raise
 
-        if attachments is not None:
-            self._add_attachments(report_message_id, attachments)
-        return report_message_id
+    def set_task_status(self, task_id, status_id):
+        try:
+            self.db.task_set_status(task_id, status_id)
+            logger.info("Status for task ID %s set to %s", task_id, status_id)
+        except Exception as e:
+            logger.error("Failed to set status for task ID %s: %s", task_id, e)
+            raise
 
     def get_tasks_childrens(self, project_id: int):
         """
@@ -97,10 +139,16 @@ class CerebroDBManager:
                 "TASK_DATA_PLANNED_DELTA": task[dbtypes.TASK_DATA_PLANNED_DELTA],
                 "TASK_DATA_NAME": task[dbtypes.TASK_DATA_NAME],
                 "TASK_DATA_PARENT_URL": task[dbtypes.TASK_DATA_PARENT_URL],
-                "TASK_DATA_ACTIVITY_NAME": None if task[dbtypes.TASK_DATA_ACTIVITY_NAME] == '' else task[dbtypes.TASK_DATA_ACTIVITY_NAME],
+                "TASK_DATA_ACTIVITY_NAME": None
+                if task[dbtypes.TASK_DATA_ACTIVITY_NAME] == ""
+                else task[dbtypes.TASK_DATA_ACTIVITY_NAME],
                 "TASK_DATA_ACTIVITY_ID": task[dbtypes.TASK_DATA_ACTIVITY_ID],
-                "TASK_DATA_SELF_USERS_DECLARED": task[dbtypes.TASK_DATA_SELF_USERS_DECLARED],
-                "TASK_DATA_SELF_USERS_APPROVED": task[dbtypes.TASK_DATA_SELF_USERS_APPROVED],
+                "TASK_DATA_SELF_USERS_DECLARED": task[
+                    dbtypes.TASK_DATA_SELF_USERS_DECLARED
+                ],
+                "TASK_DATA_SELF_USERS_APPROVED": task[
+                    dbtypes.TASK_DATA_SELF_USERS_APPROVED
+                ],
                 "TASK_DATA_CREATED": task[dbtypes.TASK_DATA_CREATED],
                 "TASK_DATA_PRIORITY": task[dbtypes.TASK_DATA_PRIORITY],
                 "TASK_DATA_PROGRESS": task[dbtypes.TASK_DATA_PROGRESS],
@@ -123,10 +171,18 @@ class CerebroDBManager:
                 "TASK_DATA_SELF_SPENT": task[dbtypes.TASK_DATA_SELF_SPENT],
                 "TASK_DATA_BUDGET": task[dbtypes.TASK_DATA_BUDGET],
                 "TASK_DATA_SPENT": task[dbtypes.TASK_DATA_SPENT],
-                "TASK_DATA_RESOURCE_SELF_DECLARED": task[dbtypes.TASK_DATA_RESOURCE_SELF_DECLARED],
-                "TASK_DATA_RESOURCE_SELF_APPROVED": task[dbtypes.TASK_DATA_RESOURCE_SELF_APPROVED],
-                "TASK_DATA_RESOURCE_DECLARED": task[dbtypes.TASK_DATA_RESOURCE_DECLARED],
-                "TASK_DATA_RESOURCE_APPROVED": task[dbtypes.TASK_DATA_RESOURCE_APPROVED],
+                "TASK_DATA_RESOURCE_SELF_DECLARED": task[
+                    dbtypes.TASK_DATA_RESOURCE_SELF_DECLARED
+                ],
+                "TASK_DATA_RESOURCE_SELF_APPROVED": task[
+                    dbtypes.TASK_DATA_RESOURCE_SELF_APPROVED
+                ],
+                "TASK_DATA_RESOURCE_DECLARED": task[
+                    dbtypes.TASK_DATA_RESOURCE_DECLARED
+                ],
+                "TASK_DATA_RESOURCE_APPROVED": task[
+                    dbtypes.TASK_DATA_RESOURCE_APPROVED
+                ],
                 "TASK_DATA_SELF_STATUS": task[dbtypes.TASK_DATA_SELF_STATUS],
                 "TASK_DATA_CC_STATUS": task[dbtypes.TASK_DATA_CC_STATUS],
                 "TASK_DATA_CC_STATUS_STAT": task[dbtypes.TASK_DATA_CC_STATUS_STAT],
@@ -135,4 +191,5 @@ class CerebroDBManager:
 
             task_list.append(task_dict)
 
+            self._get_all_childrens_recursive(task[dbtypes.TASK_DATA_ID], task_list)
             self._get_all_childrens_recursive(task[dbtypes.TASK_DATA_ID], task_list)
