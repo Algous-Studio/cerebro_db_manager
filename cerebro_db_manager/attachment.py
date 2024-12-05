@@ -2,6 +2,8 @@ import fnmatch
 import logging
 import os
 import subprocess
+from pathlib import Path
+from typing import Union
 
 import settings
 from PIL import Image
@@ -10,10 +12,20 @@ logger = logging.getLogger(__name__)
 
 
 class Attachment:
-    def __init__(self, file_path: str, thumbnails: list = None, description: str = ""):
-        if not isinstance(file_path, str) or not os.path.isfile(file_path):
+    def __init__(
+        self,
+        file_path: Union[str, Path],
+        thumbnails: list = None,
+        description: str = "",
+    ):
+        file_path = Path(file_path)
+
+        if not file_path.exists():
+            raise ValueError(f"The path '{file_path}' does not exist.")
+
+        if not (file_path.is_file() or file_path.is_dir()):
             raise ValueError(
-                "file_path must be a string and point to an existing file."
+                f"The path '{file_path}' is neither a file nor a directory."
             )
         self.file_path = file_path
         self.description = description
@@ -32,7 +44,9 @@ class Attachment:
                 if not os.path.isfile(thumbnail_path):
                     logger.warning(f"File {thumbnail_path} does not exist.")
                     break
-                if not thumbnail_path.lower().endswith((".jpg", ".jpeg", ".png")):
+                if not thumbnail_path.lower().endswith(
+                    (".jpg", ".jpeg", ".png")
+                ):
                     logger.warning(
                         f"File {thumbnail_path} must be in JPG or PNG format."
                     )
@@ -46,7 +60,9 @@ class Attachment:
                             )
                             break
                 except Exception as e:
-                    logger.warning(f"Could not open image {thumbnail_path}. Error: {e}")
+                    logger.warning(
+                        f"Could not open image {thumbnail_path}. Error: {e}"
+                    )
                     break
                 valid_thumbnails.append(thumbnail_path)
 
@@ -55,7 +71,14 @@ class Attachment:
 
 def generate_thumbnails(thumbnail_dir, file_path):
     res_code = subprocess.call(
-        [settings.MIRADA_PATH, "--mode", "thumb", file_path, "--temp", thumbnail_dir]
+        [
+            settings.MIRADA_PATH,
+            "--mode",
+            "thumb",
+            file_path,
+            "--temp",
+            thumbnail_dir,
+        ]
     )
     if res_code != 0:
         raise Exception(
