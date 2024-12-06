@@ -27,7 +27,7 @@ class Attachment:
             raise ValueError(
                 f"The path '{file_path}' is neither a file nor a directory."
             )
-        self.file_path = file_path
+        self.file_path = str(file_path)
         self.description = description
         self.thumbnails = []
 
