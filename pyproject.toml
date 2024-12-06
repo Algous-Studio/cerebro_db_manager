@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cerebro_db_manager"
-version = "0.1.0"
+version = "0.2.0"
 description = "Cerebro Production Tracking Python API Wrapper"
 authors = ["Algous <info@algousstudio.ru>"]
 license = "MIT"
