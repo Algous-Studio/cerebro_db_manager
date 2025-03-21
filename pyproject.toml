@@ -7,10 +7,6 @@ license = "MIT"
 readme = "README.md"
 
 include = [
-    "Pillow.libs/*",
-    "psycopg2_binary.libs/*",
-    "PIL/*",
-    "psycopg2/*",
     "settings.py",
     "py_cerebro/*"
 ]
